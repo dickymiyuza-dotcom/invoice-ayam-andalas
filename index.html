@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayam Andalas — Buat Invoice</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F3EE;
+  --surface:#FFFFFF;
+  --border:#E0DDD6;
+  --text:#1A1A18;
+  --muted:#7A7870;
+  --accent-light:#F0EDE6;
+  --red:#C0392B;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:var(--text);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-brand{display:flex;align-items:baseline;gap:10px}
+.topbar-brand h1{font-family:'DM Serif Display',serif;font-style:italic;font-size:20px;letter-spacing:.5px}
+.topbar-brand span{font-size:10px;letter-spacing:3px;color:#aaa;text-transform:uppercase}
+.topbar-actions{display:flex;gap:10px}
+.btn-cetak{background:#fff;color:#1A1A18;border:none;padding:9px 20px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s}
+.btn-cetak:hover{opacity:.8}
+.btn-reset{background:transparent;color:#aaa;border:1px solid #444;padding:9px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-reset:hover{border-color:#aaa;color:#fff}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:420px 1fr;min-height:calc(100vh - 52px)}
+
+/* FORM */
+.form-panel{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 52px)}
+.form-section{padding:20px 24px;border-bottom:1px solid var(--border)}
+.section-head{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.section-num{width:22px;height:22px;background:var(--text);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.section-head h2{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.03em}
+.field input,.field select{padding:9px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif;background:#FAFAF8;color:var(--text);transition:border-color .15s,background .15s;width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:var(--text);background:#fff}
+.field input[type=number]{text-align:right}
+
+/* ITEM ROWS */
+.items-wrapper{display:flex;flex-direction:column;gap:8px}
+.item-row{background:#FAFAF8;border:1px solid var(--border);border-radius:8px;padding:12px 12px 10px;position:relative}
+.item-row-label{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.07em;text-transform:uppercase}
+.item-subtotal{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.item-subtotal-formula{font-size:11px;color:var(--muted)}
+.item-subtotal-val{font-size:15px;font-weight:600;color:var(--text)}
+.btn-del-item{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:#ccc;font-size:18px;line-height:1;transition:color .15s}
+.btn-del-item:hover{color:var(--red)}
+.btn-add-item{width:100%;margin-top:8px;padding:10px;background:none;border:1.5px dashed var(--border);border-radius:8px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .15s,color .15s}
+.btn-add-item:hover{border-color:var(--text);color:var(--text)}
+
+/* TOTAL PANEL */
+.total-section{padding:16px 24px;background:var(--text);color:#fff}
+.total-section-inner{display:flex;justify-content:space-between;align-items:center}
+.total-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#aaa}
+.total-val{font-size:24px;font-weight:600}
+
+/* PREVIEW */
+.preview-panel{background:#E8E5DE;overflow-y:auto;max-height:calc(100vh - 52px);display:flex;flex-direction:column;align-items:center;padding:32px 24px}
+.preview-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#9a9790;margin-bottom:16px;align-self:flex-start}
+
+/* INVOICE PAPER */
+.invoice-paper{background:#fff;width:595px;min-height:760px;padding:48px 52px;font-family:'DM Serif Display',Georgia,serif;color:#111;box-shadow:0 4px 32px rgba(0,0,0,0.14);border-radius:3px}
+.inv-top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #111;padding-bottom:12px;margin-bottom:0}
+.inv-brand{font-size:34px;font-style:italic;font-weight:400;letter-spacing:1px;line-height:1}
+.inv-tagline{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:5px;text-transform:uppercase;color:#666;margin-top:5px}
+.inv-meta{font-family:'DM Sans',sans-serif;font-size:10.5px;line-height:2;color:#333;text-align:right}
+.inv-title{text-align:center;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin:18px 0 11px}
+.inv-to{border:1px solid #ccc;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:10.5px;line-height:2.2}
+.inv-to .lbl{font-weight:700;display:inline-block;min-width:140px}
+table.inv-tbl{width:100%;border-collapse:collapse;font-family:'DM Sans',sans-serif;font-size:10px;margin-top:14px}
+table.inv-tbl thead tr{background:#111;color:#fff}
+table.inv-tbl th{padding:7px 6px;text-align:center;font-weight:600;letter-spacing:.03em;line-height:1.4}
+table.inv-tbl td{border:1px solid #ccc;padding:7px 7px;text-align:center;vertical-align:middle}
+table.inv-tbl td.al{text-align:left}
+table.inv-tbl td.ar{text-align:right;font-weight:600}
+table.inv-tbl .total-row td{background:#F5F3EE;font-weight:700;border-top:2px solid #999}
+table.inv-tbl .total-row .tlbl{text-align:right;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+table.inv-tbl .total-row .tval{text-align:right;font-size:12px}
+.inv-bank{margin-top:28px;font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:700;font-style:italic;line-height:2.1;color:#222}
+.inv-footer{display:flex;justify-content:flex-end;margin-top:34px}
+.inv-sign{text-align:center;font-family:'DM Sans',sans-serif;font-size:10.5px;min-width:170px;line-height:1.7}
+.sign-space{
+  height:100px;
+  margin-top:6px;
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.sign-space img{
+  height:90px;
+  max-width:220px;
+  object-fit:contain;
+}
+
+/* PRINT */
+@media print{
+  .topbar,.form-panel,.preview-label{display:none!important}
+  body{background:#fff}
+  .layout{display:block}
+  .preview-panel{background:#fff;padding:0;max-height:none;overflow:visible;display:block}
+  .invoice-paper{box-shadow:none;width:100%;min-height:auto;border-radius:0;padding:28px 36px}
+  @page{size:A4;margin:1cm}
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto}
+  .form-panel{max-height:none;border-right:none;border-bottom:1px solid var(--border)}
+  .preview-panel{max-height:none;padding:20px 12px}
+  .invoice-paper{width:100%;min-width:0;padding:28px 18px}
+  .inv-top{flex-direction:column;align-items:flex-start;gap:10px}
+  .inv-meta{text-align:left}
+}
+@media(max-width:500px){
+  .topbar{padding:12px 14px}
+  .btn-reset{display:none}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .form-section{padding:14px 16px}
+  .invoice-paper{padding:18px 12px}
+  .inv-brand{font-size:26px}
+  table.inv-tbl th,table.inv-tbl td{padding:5px 4px;font-size:8.5px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <h1>Ayam Andalas</h1>
+    <span>Invoice Generator</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn-reset" onclick="resetForm()">&#8635; Reset</button>
+    <button class="btn-cetak" onclick="window.print()">&#128438;&nbsp; Cetak / Simpan PDF</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ══ FORM ══ -->
+  <div class="form-panel">
+
+    <div class="form-section">
+      <div class="section-head"><div class="section-num">1</div><h2>Data Supplier</h2></div>
+      <div class="field"><label>Nama Perusahaan</label><input id="s-nama" value="Ayam Andalas" oninput="render()"></div>
+      <div class="field"><label>Tagline / Sub-judul</label><input id="s-tagline" value="Supplier Pangan" oninput="render()"></div>
+      <div class="grid2">
+        <div class="field"><label>Nama Bank</label><input id="s-bank" value="Bank BJB" oninput="render()"></div>
+        <div class="field"><label>No. Rekening</label><input id="s-rek" value="0146700942100" oninput="render()"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Atas Nama Rekening</label><input id="s-anrek" value="Rolli Perdana Agusta" oninput="render()"></div>
+        <div class="field"><label>CP / WhatsApp</label><input id="s-cp" value="085274573900" oninput="render()"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Kota</label><input id="s-kota" value="Bogor" oninput="render()"></div>
+        <div class="field"><label>Nama Penandatangan</label><input id="s-ttd" value="Rolli Perdana Agusta" oninput="render()"></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-head"><div class="section-num">2</div><h2>Info Invoice</h2></div>
+      <div class="grid2">
+        <div class="field"><label>No. Invoice</label><input id="i-no" value="3 1/04/2026" oninput="render()"></div>
+        <div class="field"><label>Tanggal Invoice</label><input id="i-tgl" type="date" value="2026-04-01" oninput="render()"></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-head"><div class="section-num">3</div><h2>Data Pembeli</h2></div>
+      <div class="field"><label>Nama Pembeli / Restoran</label><input id="b-nama" value="RM. Alam Segar" oninput="render()"></div>
+      <div class="field"><label>Alamat</label><input id="b-alamat" value="Cikretek, Caringin" oninput="render()"></div>
+      <div class="field"><label>Metode Pembayaran</label><input id="b-bayar" value="7 hari setelah barang diterima" oninput="render()"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-head"><div class="section-num">4</div><h2>Detail Barang</h2></div>
+      <div class="items-wrapper" id="items-wrapper"></div>
+      <button class="btn-add-item" onclick="addItem()">+ Tambah Baris Barang</button>
+    </div>
+
+    <div class="total-section">
+      <div class="total-section-inner">
+        <span class="total-label">Total Invoice</span>
+        <span class="total-val" id="form-total">Rp 0</span>
+      </div>
+    </div>
+
+  </div><!-- end form -->
+
+  <!-- ══ PREVIEW ══ -->
+  <div class="preview-panel">
+    <div class="preview-label">Preview — siap cetak</div>
+    <div class="invoice-paper" id="inv"></div>
+  </div>
+
+</div>
+
+<script>
+var items=[
+  {desc:'Karkas 0.6-0.7 premium brand',tgl:'2026-04-01',tonase:54.60,koli:2,harga:43000,ekor:80}
+];
+
+function v(id){return document.getElementById(id).value}
+function el(id){return document.getElementById(id)}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+var HARI=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+var BLN=['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
+
+function parseD(s){
+  if(!s)return null;
+  var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);
+}
+function fmtLong(s){
+  var d=parseD(s);if(!d)return '';
+  return HARI[d.getDay()]+', '+d.getDate()+' '+BLN[d.getMonth()]+' '+d.getFullYear();
+}
+function fmtShort(s){
+  var d=parseD(s);if(!d)return '';
+  return d.getDate()+' '+BLN[d.getMonth()]+' '+d.getFullYear();
+}
+function rpFmt(n){return 'Rp. '+Math.round(n).toLocaleString('id-ID')}
+function rpShort(n){return 'Rp '+Math.round(n).toLocaleString('id-ID')}
+
+function renderItems(){
+  var w=el('items-wrapper');w.innerHTML='';
+  items.forEach(function(item,i){
+    var sub=item.tonase*item.harga;
+    var canDel=items.length>1;
+    var d=document.createElement('div');
+    d.className='item-row';
+    d.innerHTML=
+      '<div class="item-row-label">Barang #'+(i+1)+'</div>'+
+      (canDel?'<button class="btn-del-item" onclick="delItem('+i+')" title="Hapus baris">&#215;</button>':'')+
+      '<div class="field"><label>Deskripsi Barang</label>'+
+        '<input value="'+esc(item.desc)+'" placeholder="cth: Karkas 0.6-0.7 premium brand" oninput="items['+i+'].desc=this.value;render()"></div>'+
+      '<div class="grid2">'+
+        '<div class="field"><label>Tanggal Kirim</label>'+
+          '<input type="date" value="'+item.tgl+'" oninput="items['+i+'].tgl=this.value;render()"></div>'+
+        '<div class="field"><label>Jumlah Koli</label>'+
+          '<input type="number" min="0" value="'+item.koli+'" oninput="items['+i+'].koli=+this.value||0;render()"></div>'+
+      '</div>'+
+      '<div class="grid3">'+
+        '<div class="field"><label>Tonase (kg)</label>'+
+          '<input type="number" min="0" step="0.01" value="'+item.tonase+'" oninput="items['+i+'].tonase=+this.value||0;render()"></div>'+
+        '<div class="field"><label>Harga/kg (Rp)</label>'+
+          '<input type="number" min="0" value="'+item.harga+'" oninput="items['+i+'].harga=+this.value||0;render()"></div>'+
+        '<div class="field"><label>Jumlah Ekor</label>'+
+          '<input type="number" min="0" value="'+item.ekor+'" oninput="items['+i+'].ekor=+this.value||0;render()"></div>'+
+      '</div>'+
+      '<div class="item-subtotal">'+
+        '<span class="item-subtotal-formula">'+item.tonase.toFixed(2)+' kg &times; Rp '+Math.round(item.harga).toLocaleString('id-ID')+'/kg</span>'+
+        '<span class="item-subtotal-val">'+rpShort(sub)+'</span>'+
+      '</div>';
+    w.appendChild(d);
+  });
+}
+
+function render(){
+  renderItems();
+  var grand=0;
+  var rows=items.map(function(item,i){
+    var sub=item.tonase*item.harga;grand+=sub;
+    return '<tr>'+
+      '<td>'+(i+1)+'</td>'+
+      '<td class="al">'+esc(item.desc)+'</td>'+
+      '<td>'+fmtShort(item.tgl)+'</td>'+
+      '<td>'+item.tonase.toFixed(2)+'</td>'+
+      '<td>'+item.koli+'</td>'+
+      '<td>'+Math.round(item.harga).toLocaleString('id-ID')+'</td>'+
+      '<td>'+item.ekor+'</td>'+
+      '<td class="ar">'+rpFmt(sub)+'</td>'+
+    '</tr>';
+  }).join('');
+
+  el('form-total').textContent=rpShort(grand);
+
+  var tgl=v('i-tgl');
+  el('inv').innerHTML=
+    '<div class="inv-top">'+
+      '<div>'+
+        '<div class="inv-brand">'+esc(v('s-nama'))+'</div>'+
+        '<div class="inv-tagline">'+esc(v('s-tagline'))+'</div>'+
+      '</div>'+
+      '<div class="inv-meta">Tanggal &nbsp;&nbsp;&nbsp;: '+fmtLong(tgl)+'<br>No invoice : '+esc(v('i-no'))+'</div>'+
+    '</div>'+
+    '<div class="inv-title">Invoice</div>'+
+    '<div class="inv-to">'+
+      '<span class="lbl">Kepada</span>: '+esc(v('b-nama'))+'<br>'+
+      '<span class="lbl">Alamat</span>: '+esc(v('b-alamat'))+'<br>'+
+      '<span class="lbl">Metode Pembayaran</span>: <strong>'+esc(v('b-bayar'))+'</strong>'+
+    '</div>'+
+    '<table class="inv-tbl"><thead><tr>'+
+      '<th>No</th><th>Detail</th><th>Tanggal</th><th>Tonase<br>(kg)</th><th>Jumlah<br>Koli</th><th>Harga<br>(Rp)/kg</th><th>Jumlah<br>Ekor</th><th>Jumlah</th>'+
+    '</tr></thead><tbody>'+
+      rows+
+      '<tr class="total-row">'+
+        '<td colspan="7" class="tlbl">Total</td>'+
+        '<td class="tval ar">'+rpFmt(grand)+',-</td>'+
+      '</tr>'+
+    '</tbody></table>'+
+    '<div class="inv-bank">'+
+      'Silahkan transfer ke<br>'+
+      'Rekening a/n: '+esc(v('s-anrek'))+'<br>'+
+      'No rek '+esc(v('s-bank'))+' : '+esc(v('s-rek'))+'<br>'+
+      'Cp/wa : '+esc(v('s-cp'))+
+    '</div>'+
+    '<div class="inv-footer">'+
+      '<div class="inv-sign">'+
+        esc(v('s-kota'))+', '+fmtShort(tgl)+'<br>Hormat kami, '+esc(v('s-nama'))+
+        '<div class="sign-space"><img src="ttd.png" alt="Tanda Tangan"></div>'+
+        esc(v('s-ttd'))+
+      '</div>'+
+    '</div>';
+}
+
+function addItem(){
+  var lastTgl=items.length?items[items.length-1].tgl:v('i-tgl');
+  items.push({desc:'',tgl:lastTgl,tonase:0,koli:0,harga:43000,ekor:0});
+  render();
+  setTimeout(function(){
+    var rows=el('items-wrapper').querySelectorAll('.item-row');
+    rows[rows.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});
+  },60);
+}
+
+function delItem(i){
+  if(items.length<=1)return;
+  items.splice(i,1);render();
+}
+
+function resetForm(){
+  if(!confirm('Reset semua isian ke data default?'))return;
+  items=[{desc:'Karkas 0.6-0.7 premium brand',tgl:'2026-04-01',tonase:54.60,koli:2,harga:43000,ekor:80}];
+  var def={
+    's-nama':'Ayam Andalas','s-tagline':'Supplier Pangan','s-bank':'Bank BJB',
+    's-rek':'0146700942100','s-anrek':'Rolli Perdana Agusta','s-cp':'085274573900',
+    's-kota':'Bogor','s-ttd':'Rolli Perdana Agusta',
+    'i-no':'3 1/04/2026','i-tgl':'2026-04-01',
+    'b-nama':'RM. Alam Segar','b-alamat':'Cikretek, Caringin',
+    'b-bayar':'7 hari setelah barang diterima'
+  };
+  Object.keys(def).forEach(function(k){el(k).value=def[k];});
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
