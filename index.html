@@ -90,19 +90,8 @@ table.inv-tbl .total-row .tval{text-align:right;font-size:12px}
 .inv-bank{margin-top:28px;font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:700;font-style:italic;line-height:2.1;color:#222}
 .inv-footer{display:flex;justify-content:flex-end;margin-top:34px}
 .inv-sign{text-align:center;font-family:'DM Sans',sans-serif;font-size:10.5px;min-width:170px;line-height:1.7}
-.sign-space{
-  height:100px;
-  margin-top:6px;
-  margin-bottom:6px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.sign-space img{
-  height:90px;
-  max-width:220px;
-  object-fit:contain;
-}
+.sign-space{height:58px;margin-top:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:center}
+.sign-space img{height:55px;max-width:160px;object-fit:contain}
 
 /* PRINT */
 @media print{
@@ -249,20 +238,20 @@ function renderItems(){
       '<div class="item-row-label">Barang #'+(i+1)+'</div>'+
       (canDel?'<button class="btn-del-item" onclick="delItem('+i+')" title="Hapus baris">&#215;</button>':'')+
       '<div class="field"><label>Deskripsi Barang</label>'+
-        '<input value="'+esc(item.desc)+'" placeholder="cth: Karkas 0.6-0.7 premium brand" oninput="items['+i+'].desc=this.value;render()"></div>'+
+        '<input value="'+esc(item.desc)+'" placeholder="cth: Karkas 0.6-0.7 premium brand" oninput="items['+i+'].desc=this.value;renderPreview()"></div>'+
       '<div class="grid2">'+
         '<div class="field"><label>Tanggal Kirim</label>'+
-          '<input type="date" value="'+item.tgl+'" oninput="items['+i+'].tgl=this.value;render()"></div>'+
+          '<input type="date" value="'+item.tgl+'" oninput="items['+i+'].tgl=this.value;renderPreview()"></div>'+
         '<div class="field"><label>Jumlah Koli</label>'+
-          '<input type="number" min="0" value="'+item.koli+'" oninput="items['+i+'].koli=+this.value||0;render()"></div>'+
+          '<input type="number" min="0" value="'+item.koli+'" oninput="items['+i+'].koli=+this.value||0;renderPreview()"></div>'+
       '</div>'+
       '<div class="grid3">'+
         '<div class="field"><label>Tonase (kg)</label>'+
-          '<input type="number" min="0" step="0.01" value="'+item.tonase+'" oninput="items['+i+'].tonase=+this.value||0;render()"></div>'+
+          '<input type="number" min="0" step="0.01" value="'+item.tonase+'" oninput="items['+i+'].tonase=+this.value||0;renderPreview()"></div>'+
         '<div class="field"><label>Harga/kg (Rp)</label>'+
-          '<input type="number" min="0" value="'+item.harga+'" oninput="items['+i+'].harga=+this.value||0;render()"></div>'+
+          '<input type="number" min="0" value="'+item.harga+'" oninput="items['+i+'].harga=+this.value||0;renderPreview()"></div>'+
         '<div class="field"><label>Jumlah Ekor</label>'+
-          '<input type="number" min="0" value="'+item.ekor+'" oninput="items['+i+'].ekor=+this.value||0;render()"></div>'+
+          '<input type="number" min="0" value="'+item.ekor+'" oninput="items['+i+'].ekor=+this.value||0;renderPreview()"></div>'+
       '</div>'+
       '<div class="item-subtotal">'+
         '<span class="item-subtotal-formula">'+item.tonase.toFixed(2)+' kg &times; Rp '+Math.round(item.harga).toLocaleString('id-ID')+'/kg</span>'+
@@ -272,8 +261,7 @@ function renderItems(){
   });
 }
 
-function render(){
-  renderItems();
+function renderPreview(){
   var grand=0;
   var rows=items.map(function(item,i){
     var sub=item.tonase*item.harga;grand+=sub;
@@ -330,10 +318,15 @@ function render(){
     '</div>';
 }
 
+function renderAll(){
+  renderItems();
+  renderPreview();
+}
+
 function addItem(){
   var lastTgl=items.length?items[items.length-1].tgl:v('i-tgl');
   items.push({desc:'',tgl:lastTgl,tonase:0,koli:0,harga:43000,ekor:0});
-  render();
+  renderAll();
   setTimeout(function(){
     var rows=el('items-wrapper').querySelectorAll('.item-row');
     rows[rows.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -342,7 +335,7 @@ function addItem(){
 
 function delItem(i){
   if(items.length<=1)return;
-  items.splice(i,1);render();
+  items.splice(i,1);renderPreview();
 }
 
 function resetForm(){
@@ -357,10 +350,10 @@ function resetForm(){
     'b-bayar':'7 hari setelah barang diterima'
   };
   Object.keys(def).forEach(function(k){el(k).value=def[k];});
-  render();
+  renderAll();
 }
 
-render();
+renderAll();
 </script>
 </body>
 </html>
